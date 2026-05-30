@@ -77,9 +77,23 @@ def train(args):
 
     best_val_loss = float("inf")
     global_step = 0
+    start_epoch = 0
+
+    resume_path = os.path.join(args.out_dir, "best_model.pt")
+    if args.resume and os.path.exists(resume_path):
+        print(f"[GervinDev] Resuming from {resume_path}")
+        checkpoint = torch.load(resume_path, map_location=device, weights_only=False)
+        model.load_state_dict(checkpoint["model"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        global_step = checkpoint.get("step", 0)
+        best_val_loss = checkpoint.get("val_loss", float("inf"))
+        steps_per_epoch = len(train_loader)
+        start_epoch = global_step // steps_per_epoch if steps_per_epoch > 0 else 0
+        print(f"[GervinDev] Resumed at step {global_step} (epoch ~{start_epoch}), best_val_loss={best_val_loss:.4f}")
+
     start_time = time.time()
 
-    for epoch in range(config.max_epochs):
+    for epoch in range(start_epoch, config.max_epochs):
         for batch_idx, (x, y) in enumerate(train_loader):
             x, y = x.to(device), y.to(device)
 
@@ -143,5 +157,6 @@ if __name__ == "__main__":
     parser.add_argument("--out-dir", type=str, default="checkpoints", help="Output directory")
     parser.add_argument("--epochs", type=int, default=None, help="Number of epochs")
     parser.add_argument("--lr", type=float, default=None, help="Learning rate")
+    parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint")
     args = parser.parse_args()
     train(args)
