@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GervinDev</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface-hover: #1a1a1a;
+            --border: #262626;
+            --text: #e5e5e5;
+            --text-dim: #737373;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --user-bg: #1e293b;
+            --ai-bg: #141414;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span { color: var(--accent); }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .model-info {
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 4px 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .btn-icon {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+
+        .btn-icon:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+            border-color: var(--text-dim);
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-container::-webkit-scrollbar { width: 6px; }
+        .chat-container::-webkit-scrollbar-track { background: transparent; }
+        .chat-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .messages {
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message {
+            padding: 14px 18px;
+            border-radius: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: var(--user-bg);
+            align-self: flex-end;
+            max-width: 85%;
+            border: 1px solid #1e3a5f;
+        }
+
+        .message.assistant {
+            background: var(--ai-bg);
+            align-self: flex-start;
+            max-width: 85%;
+            border: 1px solid var(--border);
+        }
+
+        .message .role {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .message.user .role { color: var(--accent); }
+        .message.assistant .role { color: #a78bfa; }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            background: var(--accent);
+            animation: blink 0.8s infinite;
+            vertical-align: text-bottom;
+            margin-left: 1px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .welcome {
+            text-align: center;
+            padding: 80px 24px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .welcome h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome p {
+            color: var(--text-dim);
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .suggestion {
+            padding: 8px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .suggestion:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+            border-color: var(--text-dim);
+        }
+
+        .input-area {
+            padding: 16px 24px 20px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .input-wrapper {
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-box {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px;
+            transition: border-color 0.15s;
+        }
+
+        .input-box:focus-within { border-color: var(--accent); }
+
+        #prompt-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 15px;
+            padding: 10px 14px;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.5;
+            max-height: 150px;
+        }
+
+        #prompt-input::placeholder { color: var(--text-dim); }
+
+        .send-btn {
+            background: var(--accent);
+            border: none;
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            flex-shrink: 0;
+            margin: 2px;
+        }
+
+        .send-btn:hover { background: var(--accent-hover); }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .settings-bar {
+            max-width: 720px;
+            margin: 8px auto 0;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .setting {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .setting input {
+            width: 60px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            padding: 3px 6px;
+            font-size: 12px;
+            text-align: center;
+            outline: none;
+        }
+
+        .setting input:focus { border-color: var(--accent); }
+
+        .status {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-left: auto;
+        }
+
+        .status.generating { color: var(--accent); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Gervin<span>Dev</span></div>
+        <div class="header-controls">
+            <span class="model-info" id="model-info">Loading...</span>
+            <button class="btn-icon" onclick="reloadModel()" title="Reload latest checkpoint">Reload</button>
+            <button class="btn-icon" onclick="clearChat()" title="Clear chat">Clear</button>
+        </div>
+    </header>
+
+    <div class="chat-container" id="chat-container">
+        <div class="messages" id="messages">
+            <div class="welcome" id="welcome">
+                <h2>GervinDev</h2>
+                <p>Your tiny transformer, trained from scratch. Type a prompt and watch it generate text token by token.</p>
+                <div class="suggestions">
+                    <div class="suggestion" onclick="useSuggestion(this)">To be or not to be</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">O Romeo, Romeo</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Now is the winter of</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">All the world's a stage</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <div class="input-box">
+                <textarea id="prompt-input" placeholder="Type your prompt..." rows="1"></textarea>
+                <button class="send-btn" id="send-btn" onclick="sendMessage()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="settings-bar">
+            <div class="setting">
+                <label>Tokens</label>
+                <input type="number" id="max-tokens" value="200" min="1" max="1000">
+            </div>
+            <div class="setting">
+                <label>Temp</label>
+                <input type="number" id="temperature" value="0.8" min="0.1" max="2.0" step="0.1">
+            </div>
+            <div class="setting">
+                <label>Top-K</label>
+                <input type="number" id="top-k" value="40" min="1" max="200">
+            </div>
+            <span class="status" id="status"></span>
+        </div>
+    </div>
+
+    <script>
+        const messagesEl = document.getElementById('messages');
+        const chatContainer = document.getElementById('chat-container');
+        const promptInput = document.getElementById('prompt-input');
+        const sendBtn = document.getElementById('send-btn');
+        const statusEl = document.getElementById('status');
+        const welcomeEl = document.getElementById('welcome');
+        let generating = false;
+
+        fetch('/info')
+            .then(r => r.json())
+            .then(info => {
+                document.getElementById('model-info').textContent =
+                    `${(info.params / 1e6).toFixed(1)}M params | ${info.n_layers}L/${info.n_heads}H/${info.d_model}D`;
+            });
+
+        promptInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        promptInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function useSuggestion(el) {
+            promptInput.value = el.textContent;
+            sendMessage();
+        }
+
+        function addMessage(role, text) {
+            if (welcomeEl) welcomeEl.remove();
+            const msg = document.createElement('div');
+            msg.className = `message ${role}`;
+            msg.innerHTML = `<div class="role">${role === 'user' ? 'You' : 'GervinDev'}</div><span class="content"></span>`;
+            msg.querySelector('.content').textContent = text;
+            messagesEl.appendChild(msg);
+            scrollToBottom();
+            return msg;
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const prompt = promptInput.value.trim();
+            if (!prompt || generating) return;
+
+            generating = true;
+            sendBtn.disabled = true;
+            statusEl.textContent = 'Generating...';
+            statusEl.className = 'status generating';
+
+            addMessage('user', prompt);
+            promptInput.value = '';
+            promptInput.style.height = 'auto';
+
+            const aiMsg = addMessage('assistant', '');
+            const contentEl = aiMsg.querySelector('.content');
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            contentEl.after(cursor);
+
+            const maxTokens = parseInt(document.getElementById('max-tokens').value) || 200;
+            const temperature = parseFloat(document.getElementById('temperature').value) || 0.8;
+            const topK = parseInt(document.getElementById('top-k').value) || 40;
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        max_tokens: maxTokens,
+                        temperature: temperature,
+                        top_k: topK,
+                    }),
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const data = JSON.parse(line.slice(6));
+                        if (data.done) break;
+                        if (data.token) {
+                            contentEl.textContent += data.token;
+                            scrollToBottom();
+                        }
+                    }
+                }
+            } catch (err) {
+                contentEl.textContent += '\n[Error: ' + err.message + ']';
+            }
+
+            cursor.remove();
+            generating = false;
+            sendBtn.disabled = false;
+            statusEl.textContent = '';
+            statusEl.className = 'status';
+        }
+
+        async function reloadModel() {
+            statusEl.textContent = 'Reloading model...';
+            statusEl.className = 'status generating';
+            try {
+                const res = await fetch('/reload', { method: 'POST' });
+                const data = await res.json();
+                statusEl.textContent = 'Model reloaded';
+                setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'status'; }, 2000);
+                fetch('/info').then(r => r.json()).then(info => {
+                    document.getElementById('model-info').textContent =
+                        `${(info.params / 1e6).toFixed(1)}M params | ${info.n_layers}L/${info.n_heads}H/${info.d_model}D`;
+                });
+            } catch (err) {
+                statusEl.textContent = 'Reload failed';
+                statusEl.className = 'status';
+            }
+        }
+
+        function clearChat() {
+            messagesEl.innerHTML = '';
+            const welcome = document.createElement('div');
+            welcome.className = 'welcome';
+            welcome.id = 'welcome';
+            welcome.innerHTML = `
+                <h2>GervinDev</h2>
+                <p>Your tiny transformer, trained from scratch. Type a prompt and watch it generate text token by token.</p>
+                <div class="suggestions">
+                    <div class="suggestion" onclick="useSuggestion(this)">To be or not to be</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">O Romeo, Romeo</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Now is the winter of</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">All the world's a stage</div>
+                </div>`;
+            messagesEl.appendChild(welcome);
+        }
+
+        promptInput.focus();
+    </script>
+</body>
+</html>
