@@ -37,6 +37,7 @@ def generate_stream(prompt, max_tokens=200, temperature=0.8, top_k=40):
     input_ids = torch.tensor([token_ids], dtype=torch.long, device=device)
     generated = list(token_ids)
     prev_text = tokenizer.decode(generated)
+    response_so_far = ""
 
     with torch.no_grad():
         for _ in range(max_tokens):
@@ -59,11 +60,13 @@ def generate_stream(prompt, max_tokens=200, temperature=0.8, top_k=40):
             full_text = tokenizer.decode(generated)
             new_text = full_text[len(prev_text):]
             prev_text = full_text
+            response_so_far += new_text
 
-            if "User:" in new_text:
-                clean = new_text.split("User:")[0].rstrip()
-                if clean:
-                    yield clean
+            if "\nUser:" in response_so_far or "\nAssistant:" in response_so_far:
+                clean = response_so_far
+                for stop in ["\nUser:", "\nAssistant:"]:
+                    if stop in clean:
+                        clean = clean[:clean.index(stop)]
                 return
 
             if new_text:
@@ -86,7 +89,7 @@ def generate_endpoint():
     if not prompt:
         return jsonify({"error": "No prompt provided"}), 400
 
-    chat_prompt = f"User: {prompt}\nAssistant:"
+    chat_prompt = f"User: {prompt}\nAssistant: "
 
     def event_stream():
         with model_lock:
