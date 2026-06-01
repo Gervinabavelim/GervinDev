@@ -60,6 +60,12 @@ def generate_stream(prompt, max_tokens=200, temperature=0.8, top_k=40):
             new_text = full_text[len(prev_text):]
             prev_text = full_text
 
+            if "User:" in new_text:
+                clean = new_text.split("User:")[0].rstrip()
+                if clean:
+                    yield clean
+                return
+
             if new_text:
                 yield new_text
 

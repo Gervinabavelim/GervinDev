@@ -317,12 +317,12 @@
         <div class="messages" id="messages">
             <div class="welcome" id="welcome">
                 <h2>GervinDev</h2>
-                <p>Your tiny transformer, trained from scratch. Type a prompt and watch it generate text token by token.</p>
+                <p>Your tiny transformer, trained from scratch. Chat with it and see how it responds!</p>
                 <div class="suggestions">
-                    <div class="suggestion" onclick="useSuggestion(this)">To be or not to be</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">O Romeo, Romeo</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">Now is the winter of</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">All the world's a stage</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Hello!</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Who are you?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Tell me a joke</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">What is machine learning?</div>
                 </div>
             </div>
         </div>
@@ -331,7 +331,7 @@
     <div class="input-area">
         <div class="input-wrapper">
             <div class="input-box">
-                <textarea id="prompt-input" placeholder="Type your prompt..." rows="1"></textarea>
+                <textarea id="prompt-input" placeholder="Say something..." rows="1"></textarea>
                 <button class="send-btn" id="send-btn" onclick="sendMessage()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -498,12 +498,12 @@
             welcome.id = 'welcome';
             welcome.innerHTML = `
                 <h2>GervinDev</h2>
-                <p>Your tiny transformer, trained from scratch. Type a prompt and watch it generate text token by token.</p>
+                <p>Your tiny transformer, trained from scratch. Chat with it and see how it responds!</p>
                 <div class="suggestions">
-                    <div class="suggestion" onclick="useSuggestion(this)">To be or not to be</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">O Romeo, Romeo</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">Now is the winter of</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">All the world's a stage</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Hello!</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Who are you?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Tell me a joke</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">What is machine learning?</div>
                 </div>`;
             messagesEl.appendChild(welcome);
         }
