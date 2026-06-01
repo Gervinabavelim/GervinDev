@@ -264,35 +264,12 @@
             height: 18px;
         }
 
-        .settings-bar {
+        .status-bar {
             max-width: 720px;
             margin: 8px auto 0;
             display: flex;
-            gap: 16px;
             align-items: center;
         }
-
-        .setting {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            color: var(--text-dim);
-        }
-
-        .setting input {
-            width: 60px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            color: var(--text);
-            padding: 3px 6px;
-            font-size: 12px;
-            text-align: center;
-            outline: none;
-        }
-
-        .setting input:focus { border-color: var(--accent); }
 
         .status {
             font-size: 12px;
@@ -308,8 +285,7 @@
         <div class="logo">Gervin<span>Dev</span></div>
         <div class="header-controls">
             <span class="model-info" id="model-info">Loading...</span>
-            <button class="btn-icon" onclick="reloadModel()" title="Reload latest checkpoint">Reload</button>
-            <button class="btn-icon" onclick="clearChat()" title="Clear chat">Clear</button>
+            <button class="btn-icon" onclick="clearChat()" title="New chat">New Chat</button>
         </div>
     </header>
 
@@ -317,12 +293,12 @@
         <div class="messages" id="messages">
             <div class="welcome" id="welcome">
                 <h2>GervinDev</h2>
-                <p>Your tiny transformer, trained from scratch. Chat with it and see how it responds!</p>
+                <p>Your personal AI assistant. Ask me anything!</p>
                 <div class="suggestions">
-                    <div class="suggestion" onclick="useSuggestion(this)">Hello!</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">Who are you?</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">Tell me a joke</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">What is machine learning?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Hello! Who are you?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Explain quantum computing simply</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Help me write a Python script</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">What should I learn as a developer?</div>
                 </div>
             </div>
         </div>
@@ -331,7 +307,7 @@
     <div class="input-area">
         <div class="input-wrapper">
             <div class="input-box">
-                <textarea id="prompt-input" placeholder="Say something..." rows="1"></textarea>
+                <textarea id="prompt-input" placeholder="Ask GervinDev anything..." rows="1"></textarea>
                 <button class="send-btn" id="send-btn" onclick="sendMessage()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -340,19 +316,7 @@
                 </button>
             </div>
         </div>
-        <div class="settings-bar">
-            <div class="setting">
-                <label>Tokens</label>
-                <input type="number" id="max-tokens" value="200" min="1" max="1000">
-            </div>
-            <div class="setting">
-                <label>Temp</label>
-                <input type="number" id="temperature" value="0.8" min="0.1" max="2.0" step="0.1">
-            </div>
-            <div class="setting">
-                <label>Top-K</label>
-                <input type="number" id="top-k" value="40" min="1" max="200">
-            </div>
+        <div class="status-bar">
             <span class="status" id="status"></span>
         </div>
     </div>
@@ -369,8 +333,7 @@
         fetch('/info')
             .then(r => r.json())
             .then(info => {
-                document.getElementById('model-info').textContent =
-                    `${(info.params / 1e6).toFixed(1)}M params | ${info.n_layers}L/${info.n_heads}H/${info.d_model}D`;
+                document.getElementById('model-info').textContent = info.engine || 'GervinDev';
             });
 
         promptInput.addEventListener('input', function () {
@@ -411,7 +374,7 @@
 
             generating = true;
             sendBtn.disabled = true;
-            statusEl.textContent = 'Generating...';
+            statusEl.textContent = 'Thinking...';
             statusEl.className = 'status generating';
 
             addMessage('user', prompt);
@@ -424,19 +387,14 @@
             cursor.className = 'cursor';
             contentEl.after(cursor);
 
-            const maxTokens = parseInt(document.getElementById('max-tokens').value) || 200;
-            const temperature = parseFloat(document.getElementById('temperature').value) || 0.8;
-            const topK = parseInt(document.getElementById('top-k').value) || 40;
-
             try {
                 const response = await fetch('/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         prompt: prompt,
-                        max_tokens: maxTokens,
-                        temperature: temperature,
-                        top_k: topK,
+                        max_tokens: 1024,
+                        temperature: 0.7,
                     }),
                 });
 
@@ -473,24 +431,6 @@
             statusEl.className = 'status';
         }
 
-        async function reloadModel() {
-            statusEl.textContent = 'Reloading model...';
-            statusEl.className = 'status generating';
-            try {
-                const res = await fetch('/reload', { method: 'POST' });
-                const data = await res.json();
-                statusEl.textContent = 'Model reloaded';
-                setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'status'; }, 2000);
-                fetch('/info').then(r => r.json()).then(info => {
-                    document.getElementById('model-info').textContent =
-                        `${(info.params / 1e6).toFixed(1)}M params | ${info.n_layers}L/${info.n_heads}H/${info.d_model}D`;
-                });
-            } catch (err) {
-                statusEl.textContent = 'Reload failed';
-                statusEl.className = 'status';
-            }
-        }
-
         function clearChat() {
             messagesEl.innerHTML = '';
             const welcome = document.createElement('div');
@@ -498,12 +438,12 @@
             welcome.id = 'welcome';
             welcome.innerHTML = `
                 <h2>GervinDev</h2>
-                <p>Your tiny transformer, trained from scratch. Chat with it and see how it responds!</p>
+                <p>Your personal AI assistant. Ask me anything!</p>
                 <div class="suggestions">
-                    <div class="suggestion" onclick="useSuggestion(this)">Hello!</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">Who are you?</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">Tell me a joke</div>
-                    <div class="suggestion" onclick="useSuggestion(this)">What is machine learning?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Hello! Who are you?</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Explain quantum computing simply</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">Help me write a Python script</div>
+                    <div class="suggestion" onclick="useSuggestion(this)">What should I learn as a developer?</div>
                 </div>`;
             messagesEl.appendChild(welcome);
         }
