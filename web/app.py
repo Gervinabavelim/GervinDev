@@ -2,14 +2,13 @@ import os
 import json
 import argparse
 
-from dotenv import load_dotenv
 from flask import Flask, render_template, request, Response, jsonify, stream_with_context
-import anthropic
-
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+import urllib.request
 
 app = Flask(__name__)
-client = None
+
+OLLAMA_URL = "http://localhost:11434"
+MODEL = "llama3"
 
 SYSTEM_PROMPT = """You are GervinDev, a personal AI assistant created by Gervin. You are helpful, friendly, and concise.
 Keep responses conversational and to the point. Use plain language.
@@ -34,18 +33,39 @@ def generate_endpoint():
 
     def event_stream():
         try:
-            with client.messages.stream(
-                model="claude-sonnet-4-20250514",
-                max_tokens=max_tokens,
-                temperature=temperature,
-                system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": prompt}],
-            ) as stream:
-                for text in stream.text_stream:
-                    yield f"data: {json.dumps({'token': text})}\n\n"
+            payload = json.dumps({
+                "model": MODEL,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+                "stream": True,
+                "options": {
+                    "temperature": temperature,
+                    "num_predict": max_tokens,
+                },
+            }).encode()
+
+            req = urllib.request.Request(
+                f"{OLLAMA_URL}/api/chat",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+
+            with urllib.request.urlopen(req) as resp:
+                for line in resp:
+                    if not line.strip():
+                        continue
+                    chunk = json.loads(line)
+                    if chunk.get("message", {}).get("content"):
+                        token = chunk["message"]["content"]
+                        yield f"data: {json.dumps({'token': token})}\n\n"
+                    if chunk.get("done"):
+                        break
+
             yield f"data: {json.dumps({'done': True})}\n\n"
-        except anthropic.APIError as e:
-            yield f"data: {json.dumps({'token': f'[Error: {e.message}]'})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'token': f'[Error: {str(e)}]'})}\n\n"
             yield f"data: {json.dumps({'done': True})}\n\n"
 
     return Response(
@@ -58,27 +78,30 @@ def generate_endpoint():
 @app.route("/info")
 def info_endpoint():
     return jsonify({
-        "engine": "Claude API",
-        "model": "claude-sonnet-4-20250514",
+        "engine": "Ollama (Local)",
+        "model": MODEL,
         "name": "GervinDev",
     })
 
 
 def main():
-    global client
-
     parser = argparse.ArgumentParser(description="GervinDev Web UI")
-    parser.add_argument("--port", type=int, default=5000)
+    parser.add_argument("--port", type=int, default=5001)
     parser.add_argument("--host", type=str, default="127.0.0.1")
+    parser.add_argument("--model", type=str, default="llama3")
     args = parser.parse_args()
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("[GervinDev] Error: ANTHROPIC_API_KEY not set. Add it to .env file.")
-        return
+    global MODEL
+    MODEL = args.model
 
-    client = anthropic.Anthropic(api_key=api_key)
-    print(f"[GervinDev] Claude API connected")
+    try:
+        urllib.request.urlopen(f"{OLLAMA_URL}/api/tags")
+        print(f"[GervinDev] Ollama connected")
+    except Exception:
+        print(f"[GervinDev] Warning: Ollama not running at {OLLAMA_URL}")
+        print(f"[GervinDev] Start it with: ollama serve")
+
+    print(f"[GervinDev] Model: {MODEL}")
     print(f"[GervinDev] Starting web UI on http://{args.host}:{args.port}")
     app.run(host=args.host, port=args.port, debug=False, threaded=True)
 
