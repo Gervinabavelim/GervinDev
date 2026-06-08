@@ -8,7 +8,7 @@ import urllib.request
 app = Flask(__name__)
 
 OLLAMA_URL = "http://localhost:11434"
-MODEL = "llama3"
+MODEL = "gervindev"
 
 SYSTEM_PROMPT = """You are GervinDev, a personal AI assistant created by Gervin. You are helpful, friendly, and concise.
 Keep responses conversational and to the point. Use plain language.
