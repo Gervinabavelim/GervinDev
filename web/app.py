@@ -88,7 +88,7 @@ def main():
     parser = argparse.ArgumentParser(description="GervinDev Web UI")
     parser.add_argument("--port", type=int, default=5001)
     parser.add_argument("--host", type=str, default="127.0.0.1")
-    parser.add_argument("--model", type=str, default="llama3")
+    parser.add_argument("--model", type=str, default="gervindev")
     args = parser.parse_args()
 
     global MODEL
