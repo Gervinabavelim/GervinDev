@@ -21,7 +21,10 @@ class GervinTokenizer:
             pairs[(tokens[i], tokens[i + 1])] += 1
         return pairs
 
-    def train(self, text):
+    def train(self, text, max_chars=500000):
+        if len(text) > max_chars:
+            text = text[:max_chars]
+
         chars = sorted(set(text))
         self.char_to_id = {tok: i for i, tok in enumerate(self.special_tokens)}
         offset = len(self.special_tokens)
@@ -31,7 +34,10 @@ class GervinTokenizer:
         tokens = [self.char_to_id.get(ch, self.char_to_id[self.unk_token]) for ch in text]
         next_id = len(self.char_to_id)
 
-        while next_id < self.vocab_size:
+        num_merges = self.vocab_size - next_id
+        print(f"  [tokenizer] {len(tokens):,} tokens, planning {num_merges} merges...")
+
+        for step in range(num_merges):
             pairs = self._get_pairs(tokens)
             if not pairs:
                 break
@@ -55,8 +61,12 @@ class GervinTokenizer:
             tokens = new_tokens
             next_id += 1
 
+            if (step + 1) % 1000 == 0:
+                print(f"  [tokenizer] {step + 1}/{num_merges} merges, {len(tokens):,} tokens remaining")
+
         self.id_to_char = {v: k for k, v in self.char_to_id.items()}
         self.vocab_size = len(self.char_to_id)
+        print(f"  [tokenizer] done — vocab size: {self.vocab_size}")
 
     def encode(self, text):
         tokens = [self.char_to_id.get(ch, self.char_to_id[self.unk_token]) for ch in text]

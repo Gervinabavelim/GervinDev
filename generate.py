@@ -3,7 +3,6 @@ import argparse
 import torch
 import torch.nn.functional as F
 
-from config import GervinConfig
 from tokenizer import GervinTokenizer
 from model import GervinDev
 
@@ -38,8 +37,13 @@ def generate(model, tokenizer, prompt, max_tokens=200, temperature=0.8, top_k=40
             probs = F.softmax(logits, dim=-1)
             next_token = torch.multinomial(probs, num_samples=1)
 
-            generated.append(next_token.item())
+            token_id = next_token.item()
+            generated.append(token_id)
             input_ids = torch.cat([input_ids, next_token], dim=1)
+
+            eos_id = tokenizer.char_to_id.get(tokenizer.eos_token)
+            if eos_id is not None and token_id == eos_id:
+                break
 
     return tokenizer.decode(generated)
 
@@ -53,11 +57,11 @@ def main():
     parser.add_argument("--top-k", type=int, default=40, help="Top-k sampling")
     args = parser.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu")
     print(f"[GervinDev] Device: {device}")
 
     print(f"[GervinDev] Loading model from {args.checkpoint}")
-    model, config = load_model(args.checkpoint, device)
+    model, _ = load_model(args.checkpoint, device)
     print(f"[GervinDev] Parameters: {model.num_parameters:,}")
 
     tokenizer = GervinTokenizer()

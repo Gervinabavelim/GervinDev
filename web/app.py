@@ -25,20 +25,29 @@ def index():
 def generate_endpoint():
     data = request.get_json()
     prompt = data.get("prompt", "")
+    messages = data.get("messages", [])
     max_tokens = data.get("max_tokens", 1024)
     temperature = data.get("temperature", 0.7)
 
-    if not prompt:
+    if not prompt and not messages:
         return jsonify({"error": "No prompt provided"}), 400
+
+    ollama_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+    for msg in messages:
+        ollama_messages.append({
+            "role": msg["role"],
+            "content": msg["content"],
+        })
+
+    if prompt and (not messages or messages[-1].get("content") != prompt):
+        ollama_messages.append({"role": "user", "content": prompt})
 
     def event_stream():
         try:
             payload = json.dumps({
                 "model": MODEL,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": prompt},
-                ],
+                "messages": ollama_messages,
                 "stream": True,
                 "options": {
                     "temperature": temperature,
